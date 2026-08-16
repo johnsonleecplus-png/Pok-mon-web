@@ -1,0 +1,41 @@
+{{define "cards_partial.html"}}
+{{range .Cards}}
+<a href="/cards/{{.CardID}}" class="card"
+   hx-get="/cards/{{.CardID}}" hx-target="#card-detail-modal" hx-trigger="click"
+   hx-push-url="true"
+   data-set="{{.SetID}}">
+  {{if hasChinese .Name}}
+  <span class="lang-tag zh">中</span>
+  {{else}}
+  <span class="lang-tag fallback">暂无中文</span>
+  {{end}}
+  <img src="{{.ImageSm}}{{if isLocal .ImageSm}}{{staticVer .ImageSm}}{{end}}" data-full="{{.ImageLg}}" alt="{{.Name}}" loading="lazy" decoding="async">
+  <button class="fav" onclick="event.preventDefault();event.stopPropagation();toggleFav(this)" aria-label="收藏">
+    <svg class="fav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <div class="card-foot">
+    <span class="card-no">#{{.Number}} / {{setCode .SetID}}</span>
+    {{if .Rarity}}<span class="rarity-pill {{rarityClass .Rarity}}" title="{{.Rarity}} / {{rarityZh .Rarity}}"><span class="lang-zh">{{rarityZh .Rarity}}</span><span class="lang-en">{{.Rarity}}</span></span>{{end}}
+  </div>
+  {{if .Year}}<span class="card-year-badge">{{.Year}}</span>{{end}}
+  {{if .PTCGOMkt}}<span class="card-price-badge">{{formatPriceShort .PTCGOMkt}}</span>{{end}}
+</a>
+{{else}}
+<div class="empty-state">
+  <p>没有匹配卡牌</p>
+  <p class="sub">试试调整筛选条件</p>
+</div>
+{{end}}
+
+{{if .HasMore}}
+<div id="load-more-trigger" style="grid-column: 1 / -1; text-align: center; padding: 24px 0; height: 60px;"
+     hx-get="/cards?{{if .SetID}}set_id={{.SetID}}&{{end}}supertype={{if .Filter.Category}}{{.Filter.Category}}{{else}}全部{{end}}&sort={{if .Filter.Sort}}{{.Filter.Sort}}{{else}}number{{end}}{{if .Filter.Type}}&type={{.Filter.Type}}{{end}}{{if .Filter.PriceMin}}&price_min={{.Filter.PriceMin}}{{end}}{{if .Filter.PriceMax}}&price_max={{.Filter.PriceMax}}{{end}}{{if .Filter.FavIDs}}&fav_ids={{.Filter.FavIDs}}{{end}}&page={{addOne .Page}}"
+     hx-target="#load-more-trigger"
+     hx-swap="outerHTML"
+     hx-trigger="revealed">
+  <span style="color: var(--text-dim); font-size: 13px;">↓ 滚动加载更多</span>
+</div>
+{{end}}
+{{end}}

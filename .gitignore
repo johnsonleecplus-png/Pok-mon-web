@@ -1,0 +1,23 @@
+# Go binaries
+mars-poke
+*.exe
+
+# SQLite databases (personal data, huge)
+cards.db
+cards.db-journal
+cards.db-shm
+cards.db-wal
+
+# Card image assets — 3.2GB of data, not source code.
+# Regenerated/downloaded separately; do not commit.
+static/cards/
+static/cards_search/
+
+# Local runtime scripts
+run_server.sh
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

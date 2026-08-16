@@ -1,0 +1,285 @@
+{{define "card_detail_body.html"}}
+<div class="modal-body">
+  <div class="modal-header">
+    <h2>
+      <span class="lang-zh">{{.Card.Name}}</span>
+      <span class="lang-en">{{.Card.Name}}</span>
+    </h2>
+    <div class="sub">
+      <span>#{{.Card.Number}} / {{setCode .Card.SetID}}</span>
+      <span>·</span>
+      <span class="set-name">{{.Card.SetName}}</span>
+      <span>·</span>
+      {{if .Card.Year}}<span class="year-badge">{{.Card.Year}}</span>{{end}}
+      <span>·</span>
+      {{if .Card.HP}}<span>HP {{.Card.HP}}</span>{{end}}
+      {{if .Card.Supertype}}<span>{{.Card.Supertype}}</span>{{end}}
+      <span>·</span>
+      <span class="rarity-pill {{rarityClass .Card.Rarity}}"><span class="lang-zh">{{rarityZh .Card.Rarity}}</span><span class="lang-en">{{.Card.Rarity}}</span></span>
+      <span>·</span>
+      <span class="data-source chs">CHS · 简中</span>
+      <span class="data-source ptcg lang-en">PTCG · EN</span>
+    </div>
+  </div>
+
+  <!-- 价格 -->
+  {{if or .Card.PTCGOMkt .Card.TcgplayerLow .Card.Cardmarkt}}
+  <div class="price-row">
+    {{if .Card.PTCGOMkt}}
+    <div class="price-cell">
+      <div class="label">TCGplayer 市场</div>
+      <div class="value market">{{formatPrice .Card.PTCGOMkt}}</div>
+    </div>
+    {{end}}
+    {{if .Card.TcgplayerLow}}
+    <div class="price-cell">
+      <div class="label">最低</div>
+      <div class="value">{{formatPrice .Card.TcgplayerLow}}</div>
+    </div>
+    {{end}}
+    {{if .Card.Cardmarkt}}
+    <div class="price-cell">
+      <div class="label">Cardmarket 均价</div>
+      <div class="value">€{{.Card.Cardmarkt}}</div>
+    </div>
+    {{end}}
+  </div>
+  {{end}}
+
+  <!-- 进化/赛制/画师 -->
+  {{if or .Card.EvolvesFrom .Card.EvolvesTo .Card.RegMark .Card.Artist}}
+  <div class="battle-stats">
+    {{if .Card.EvolvesFrom}}
+    <div class="stat">
+      <div class="label">进化自</div>
+      <div class="value">{{.Card.EvolvesFrom}}</div>
+    </div>
+    {{end}}
+    {{if .Card.EvolvesTo}}
+    <div class="stat">
+      <div class="label">进化为</div>
+      <div class="value">{{.Card.EvolvesTo}}</div>
+    </div>
+    {{end}}
+    {{if .Card.RegMark}}
+    <div class="stat">
+      <div class="label">赛制标记</div>
+      <div class="value">Reg {{.Card.RegMark}}</div>
+    </div>
+    {{end}}
+    {{if .Card.Artist}}
+    <div class="stat">
+      <div class="label">画师</div>
+      <div class="value">{{.Card.Artist}}</div>
+    </div>
+    {{end}}
+  </div>
+  {{end}}
+
+  <!-- 特性 -->
+  {{$abs := abilities .Card.Abilities}}
+  {{if $abs}}
+  <div class="section">
+    <h4>特性</h4>
+    {{range $a := $abs}}
+    <div class="ability">
+      {{if $a.Name}}
+      <div class="ability-name">
+        {{$a.Name}}
+        {{if $a.Type}}<span class="ability-type">{{$a.Type}}</span>{{end}}
+      </div>
+      {{end}}
+      {{if $a.Text}}<div class="ability-desc">{{$a.Text}}</div>{{end}}
+    </div>
+    {{end}}
+  </div>
+  {{end}}
+
+  <!-- 招式 -->
+  {{$ats := attacks .Card.Attacks}}
+  {{if $ats}}
+  <div class="section">
+    <h4>招式</h4>
+    {{range $at := $ats}}
+    <div class="attack">
+      {{if or $at.Name $at.Damage}}
+      <div class="attack-head">
+        {{if $at.Name}}<div class="attack-name">{{$at.Name}}</div>{{end}}
+        {{if $at.Damage}}<div class="attack-dmg">{{$at.Damage}}</div>{{end}}
+      </div>
+      {{end}}
+      {{if $at.Cost}}
+      <div class="cost">
+        {{range $c := $at.Cost}}
+        {{if $c}}<span class="cost-pip" style="background:{{typeColor $c}}"></span>{{end}}
+        {{end}}
+      </div>
+      {{end}}
+      {{if $at.Text}}<div class="attack-desc">{{$at.Text}}</div>{{end}}
+    </div>
+    {{end}}
+  </div>
+  {{end}}
+
+  <!-- 弱点/抗性/撤退 -->
+  {{$wr := weakres .Card.Weakness}}
+  {{$rr := weakres .Card.Resistance}}
+  {{if or $wr $rr .Card.RetreatCost}}
+  <div class="section">
+    <h4>战斗数据</h4>
+    <div class="battle-stats">
+      {{if $wr}}
+      <div class="stat">
+        <div class="label">弱点</div>
+        <div class="value">
+          {{range $w := $wr}}{{if $w.Type}}<span style="color:{{typeColor $w.Type}}">{{$w.Type}} {{$w.Value}}</span>{{end}} {{end}}
+        </div>
+      </div>
+      {{end}}
+      {{if $rr}}
+      <div class="stat">
+        <div class="label">抗性</div>
+        <div class="value">
+          {{range $r := $rr}}{{if $r.Type}}<span style="color:{{typeColor $r.Type}}">{{$r.Type}} {{$r.Value}}</span>{{end}} {{end}}
+        </div>
+      </div>
+      {{end}}
+      {{if .Card.RetreatCost}}
+      <div class="stat">
+        <div class="label">撤退</div>
+        <div class="value">{{.Card.RetreatCost}}</div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+
+  <!-- 卡牌描述 -->
+  {{if .Card.FlavorText}}
+  <div class="section">
+    <h4>卡牌描述</h4>
+    <div class="rules">{{.Card.FlavorText}}</div>
+  </div>
+  {{end}}
+
+  <!-- 规则 -->
+  {{if .Card.Rules}}
+  <div class="section">
+    <h4>规则</h4>
+    <div class="rules">{{.Card.Rules}}</div>
+  </div>
+  {{end}}
+
+  <!-- 元数据 -->
+  <div class="note-grid">
+    {{if .Card.Release}}
+    <div class="note-field">
+      <div class="label">发售日期</div>
+      <div class="value">{{.Card.Release}}</div>
+    </div>
+    {{end}}
+    {{if .Card.Number}}
+    <div class="note-field">
+      <div class="label">编号</div>
+      <div class="value">#{{.Card.Number}}</div>
+    </div>
+    {{end}}
+    {{if .Card.NationalDex}}
+    <div class="note-field">
+      <div class="label">全国图鉴</div>
+      <div class="value">#{{.Card.NationalDex}}</div>
+    </div>
+    {{end}}
+    {{if .Card.Rarity}}
+    <div class="note-field">
+      <div class="label">稀有度</div>
+      <div class="value">{{.Card.Rarity}}</div>
+    </div>
+    {{end}}
+  </div>
+
+  <!-- 个人标注 -->
+  <div class="notes-section">
+    <h4>
+      <span class="lang-zh">个人标注</span>
+      <span class="lang-en">My Notes</span>
+    </h4>
+    <div class="note-grid">
+      <div class="note-field">
+        <div class="label lang-zh">收藏状态</div>
+        <div class="label lang-en">Status</div>
+        <div class="value">
+          <button class="fav-detail" data-cardid="{{.Card.CardID}}" onclick="toggleFavDetail(this)" aria-label="收藏">
+            <svg class="fav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <span style="margin-left:8px;font-size:13px;color:var(--text-dim)">
+            <span class="lang-zh">点击切换收藏</span>
+            <span class="lang-en">Toggle favorite</span>
+          </span>
+        </div>
+      </div>
+      <div class="note-field">
+        <div class="label lang-zh">我的评分</div>
+        <div class="label lang-en">Rating</div>
+        <div class="value" id="rating-{{.Card.CardID}}">
+          <select id="rating-select-{{.Card.CardID}}" style="background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:13px;font-family:inherit">
+            <option value="">—</option>
+            <option value="1">★</option>
+            <option value="2">★★</option>
+            <option value="3">★★★</option>
+            <option value="4">★★★★</option>
+            <option value="5">★★★★★</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="note-field" style="margin-top:8px">
+      <div class="label lang-zh">备注</div>
+      <div class="label lang-en">Notes</div>
+      <textarea id="notes-textarea-{{.Card.CardID}}" class="note-textarea" data-cardid="{{.Card.CardID}}" placeholder="记录你的想法..."></textarea>
+    </div>
+    <button class="chip" onclick="saveAnnotations('{{.Card.CardID}}')" style="margin-top:12px;background:var(--home-green);color:#fff;border:none;padding:6px 20px;border-radius:8px;font-size:14px;cursor:pointer">
+      <span class="lang-zh">保存标注</span>
+      <span class="lang-en">Save Notes</span>
+    </button>
+    <span id="save-msg-{{.Card.CardID}}" style="margin-left:10px;font-size:13px;color:var(--home-green);display:none">✓ <span class="lang-zh">已保存</span><span class="lang-en">Saved</span></span>
+  </div>
+</div>
+
+<script>
+// 详情页收藏（爱心图标，跟网格联动, 与 DB 同步）
+function toggleFavDetail(btn) {
+  const cardId = btn.dataset.cardid;
+  const willActive = !btn.classList.contains('active');
+  setFavVisual(btn, willActive);
+  // 异步同步到 DB (用全局 FavStore, 在 layout.html 定义)
+  if (willActive) FavStore.add(cardId); else FavStore.remove(cardId);
+  // 同步外部网格红心 UI
+  const gridFav = document.querySelector(`.card[href="/cards/${cardId}"] .fav`);
+  if (gridFav) setFavVisual(gridFav, willActive);
+}
+// 保存标注 (评分 + 备注，统一确认)
+function saveAnnotations(cardId) {
+  const sel = document.getElementById('rating-select-' + cardId);
+  const ta = document.getElementById('notes-textarea-' + cardId);
+  if (sel) {
+    const ratings = JSON.parse(localStorage.getItem('mars_ratings') || '{}');
+    ratings[cardId] = sel.value;
+    localStorage.setItem('mars_ratings', JSON.stringify(ratings));
+  }
+  if (ta) {
+    const notes = JSON.parse(localStorage.getItem('mars_notes') || '{}');
+    notes[cardId] = ta.value;
+    localStorage.setItem('mars_notes', JSON.stringify(notes));
+  }
+  // 显示确认信息
+  const msg = document.getElementById('save-msg-' + cardId);
+  if (msg) {
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  }
+}
+</script>
+{{end}}

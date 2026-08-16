@@ -1,0 +1,441 @@
+{{define "layout.html"}}<!doctype html>
+<html lang="zh-CN" data-lang-active="zh" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{.Title}}</title>
+<link rel="icon" type="image/svg+xml" href="/static/pokeball.svg{{staticVer "/static/pokeball.svg"}}">
+<link rel="stylesheet" href="/static/pokemon.css{{staticVer "/static/pokemon.css"}}">
+<script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
+</head>
+<body>
+
+<!-- ===== Topbar ===== -->
+<header class="topbar">
+  <a href="/" class="brand">
+    <svg class="logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-label="精灵球">
+      <defs>
+        <linearGradient id="red" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FF6868"/>
+          <stop offset="100%" stop-color="#D62828"/>
+        </linearGradient>
+        <linearGradient id="white" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="100%" stop-color="#E0E0E0"/>
+        </linearGradient>
+        <radialGradient id="btn" cx="40%" cy="40%">
+          <stop offset="0%" stop-color="#888"/>
+          <stop offset="100%" stop-color="#1a1a1a"/>
+        </radialGradient>
+      </defs>
+      <circle cx="16" cy="16" r="14" fill="url(#red)" stroke="#1a1a1a" stroke-width="0.8"/>
+      <path d="M 2 16 A 14 14 0 0 0 30 16 Z" fill="url(#white)" stroke="none"/>
+      <rect x="1.5" y="14.8" width="29" height="2.4" fill="#1a1a1a"/>
+      <circle cx="16" cy="16" r="4.5" fill="#1a1a1a" stroke="#0d0d0d" stroke-width="0.5"/>
+      <circle cx="16" cy="16" r="3.5" fill="url(#btn)"/>
+      <circle cx="14.3" cy="14.3" r="1.1" fill="rgba(255,255,255,0.55)"/>
+    </svg>
+    <h1>MARS-宝可梦卡牌库</h1>
+  </a>
+  <div class="search-wrap">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
+    <input type="search" class="search" placeholder="搜索卡名 / 编号 / 招式..."
+           hx-get="/cards" hx-trigger="input changed delay:300ms" hx-target="#card-grid"
+           name="q" oninput="State.q=this.value">
+  </div>
+  <div class="topbar-actions">
+    <div class="lang-switch" id="lang-switch">
+      <button class="active" data-lang="zh" onclick="setLang('zh')">中</button>
+      <button data-lang="en" onclick="setLang('en')">EN</button>
+    </div>
+    <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="切换暗/亮主题">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ===== Sidebar (服务端直接渲染, 不走 HTMX 懒加载) ===== -->
+  <aside class="sidebar" id="sidebar">
+    {{template "sidebar.html" .Sidebar}}
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main class="main">
+    <div class="set-header" id="set-header">
+      <div class="set-title">
+        <h2>{{.Title}}</h2>
+      </div>
+    </div>
+
+    <!-- 筛选条 -->
+    <div class="filters" id="filters">
+      <span class="filter-label"><span class="lang-zh">类型</span><span class="lang-en">Type</span></span>
+      <button class="chip {{if eq .Filter.Category "全部"}}active{{end}}" data-filter="supertype"
+              onclick="setFilter('supertype','全部',this)">全部</button>
+      <button class="chip {{if eq .Filter.Category "宝可梦"}}active{{end}}" data-filter="supertype"
+              onclick="setFilter('supertype','宝可梦',this)"><span class="lang-zh">宝可梦</span><span class="lang-en">Pokémon</span></button>
+      <button class="chip {{if eq .Filter.Category "人物卡"}}active{{end}}" data-filter="supertype"
+              onclick="setFilter('supertype','人物卡',this)"><span class="lang-zh">人物卡</span><span class="lang-en">Supporter</span></button>
+      <button class="chip {{if eq .Filter.Category "道具卡"}}active{{end}}" data-filter="supertype"
+              onclick="setFilter('supertype','道具卡',this)"><span class="lang-zh">道具卡</span><span class="lang-en">Item</span></button>
+      <button class="chip {{if eq .Filter.Category "宝可梦道具"}}active{{end}}" data-filter="supertype"
+              onclick="setFilter('supertype','宝可梦道具',this)"><span class="lang-zh">宝可梦道具</span><span class="lang-en">Pokémon Tool</span></button>
+      <button class="chip {{if eq .Filter.Category "场地卡"}}active{{end}}" data-filter="supertype"
+              onclick="setFilter('supertype','场地卡',this)"><span class="lang-zh">场地卡</span><span class="lang-en">Stadium</span></button>
+      <button class="chip {{if eq .Filter.Category "能量卡"}}active{{end}}" data-filter="supertype"
+              onclick="setFilter('supertype','能量卡',this)"><span class="lang-zh">能量卡</span><span class="lang-en">Energy</span></button>
+
+      <span class="filter-label" style="margin-left:12px"><span class="lang-zh">属性</span><span class="lang-en">Type</span></span>
+      {{range .Types}}
+      <button class="chip type-chip{{if eq $.Filter.Type .}} chip-active{{end}}"
+              data-type="{{.}}"
+              onclick="toggleTypeFilter(this,'{{.}}')"
+              style="--chip-color:{{typeColor .}}">
+        <span class="chip-dot" style="background:{{typeColor .}}"></span>
+        <span class="lang-zh">{{.}}</span><span class="lang-en">{{typeName .}}</span>
+      </button>
+      {{end}}
+
+      <span class="filter-label" style="margin-left:12px"><span class="lang-zh">排序</span><span class="lang-en">Sort</span></span>
+      <button class="chip {{if eq .Filter.Sort "number"}}active{{end}}" data-filter="sort"
+              onclick="setFilter('sort','number',this)">#</button>
+      <button class="chip {{if eq .Filter.Sort "price-desc"}}active{{end}}" data-filter="sort"
+              onclick="setFilter('sort','price-desc',this)"><span class="lang-zh">价格↓</span><span class="lang-en">Price↓</span></button>
+      <button class="chip {{if eq .Filter.Sort "name"}}active{{end}}" data-filter="sort"
+              onclick="setFilter('sort','name',this)"><span class="lang-zh">名称</span><span class="lang-en">Name</span></button>
+
+      <!-- 收藏筛选 -->
+      <button class="chip" data-filter="fav" id="fav-filter-btn"
+              onclick="setFilter('fav', this.classList.contains('active')?'':'true', this)"
+              style="margin-left:8px">
+        ♥ <span class="lang-zh">我的收藏</span><span class="lang-en">Favorites</span>
+      </button>
+
+      <!-- 价格区间筛选 -->
+      <span class="filter-label" style="margin-left:8px"><span class="lang-zh">价格</span><span class="lang-en">Price</span></span>
+      <input type="number" class="price-input" id="price-min" placeholder="Min" min="0" step="0.01"
+             onchange="setPriceFilter()" style="width:70px">
+      <span style="color:var(--text-faint)">—</span>
+      <input type="number" class="price-input" id="price-max" placeholder="Max" min="0" step="0.01"
+             onchange="setPriceFilter()" style="width:70px">
+    </div>
+
+    <!-- 结果数 -->
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px">
+      <span class="lang-zh">共 <b style="color:var(--text)" id="card-total">{{.Total}}</b> 张卡</span>
+      <span class="lang-en"><b style="color:var(--text)" id="card-total">{{.Total}}</b> cards</span>
+    </div>
+
+    <!-- 卡片网格 -->
+    <div id="card-grid" class="grid"
+         hx-get="/cards" hx-trigger="load" hx-swap="innerHTML">
+      {{if .CardsHTML}}{{.CardsHTML}}{{else}}{{template "cards_partial.html" .}}{{end}}
+    </div>
+  </main>
+</div>
+
+<!-- ===== Modal: 卡牌详情 ===== -->
+<div id="card-detail-modal" class="modal{{if .DetailCard}} show{{end}}"
+     hx-target="this" hx-swap="innerHTML">
+  {{if .DetailCard}}
+  <div class="modal-content modal-zoom">
+    <button class="modal-close" onclick="closeModal()" aria-label="关闭">×</button>
+    <div class="modal-art">
+      <img src="{{if isLocal .DetailCard.ImageSm}}{{.DetailCard.ImageSm}}{{staticVer .DetailCard.ImageSm}}{{else}}{{.DetailCard.ImageLg}}{{end}}" alt="{{.DetailCard.Name}}" class="card-zoom-img">
+    </div>
+    <div class="modal-body">{{template "card_detail_body.html" dict "Card" $.DetailCard}}</div>
+  </div>
+  {{end}}
+</div>
+
+<script>
+// ===== F5 / Ctrl+R 刷新 → 保留在 /app =====
+(function() {
+  if (window.location.pathname === '/app') {
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) {
+        e.preventDefault();
+        window.location.reload(true);
+      }
+    });
+  }
+})();
+</script>
+
+<script>
+// ===== 全局状态 =====
+const State = {
+  supertype: "{{.Filter.Category}}",  // 兼容旧字段名, 实际是 category
+  type: "{{.Filter.Type}}",
+  rarity: "{{.Filter.Rarity}}",
+  sort: "{{.Filter.Sort}}",
+  set_id: "{{.Active}}",
+  q: "",
+  price_min: "",
+  price_max: "",
+  fav: ""
+};
+
+// ===== 语言切换 =====
+function setLang(lang) {
+  document.querySelector('#lang-switch .active')?.classList.remove('active');
+  document.querySelector(`#lang-switch [data-lang="${lang}"]`)?.classList.add('active');
+  document.documentElement.setAttribute('data-lang-active', lang);
+}
+
+// ===== 主题切换 =====
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme', cur === 'light' ? '' : 'light');
+}
+
+// ===== 筛选 =====
+function setFilter(key, val, btn) {
+  State[key] = val;
+  if (btn) {
+    const group = btn.dataset.filter;
+    document.querySelectorAll(`.chip[data-filter="${group}"]`).forEach(b => b.classList.remove('active'));
+    if (val) btn.classList.add('active');
+  }
+  // 切超类型时清除属性筛选（属性只在宝可梦下有意义）
+  if (key === 'supertype') {
+    State.type = '';
+    document.querySelectorAll('.type-chip.chip-active').forEach(b => b.classList.remove('chip-active'));
+    document.getElementById('filters')?.classList.remove('type-collapsed');
+  }
+  refresh();
+}
+
+function toggleTypeFilter(btn, type) {
+  const wasActive = btn.classList.contains('chip-active');
+  document.querySelectorAll('.type-chip.chip-active').forEach(b => b.classList.remove('chip-active'));
+  if (!wasActive) {
+    btn.classList.add('chip-active');
+    State.type = type;
+    // 选属性时自动切到宝可梦超类型
+    State.supertype = '宝可梦';
+    document.querySelectorAll('.chip[data-filter="supertype"]').forEach(b => {
+      b.classList.remove('active');
+      if (b.textContent.trim() === '宝可梦') b.classList.add('active');
+    });
+    // 选中属性后隐藏其他属性 chip
+    document.getElementById('filters')?.classList.add('type-collapsed');
+  } else {
+    State.type = "";
+    // 取消选中后恢复显示全部属性 chip
+    document.getElementById('filters')?.classList.remove('type-collapsed');
+  }
+  refresh();
+}
+
+function setPriceFilter() {
+  State.price_min = document.getElementById('price-min').value;
+  State.price_max = document.getElementById('price-max').value;
+  refresh();
+}
+
+// ===== 侧边栏 =====
+function activateSet(el, setID) {
+  document.querySelectorAll('.set-item.active').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  State.set_id = setID;
+  refresh();
+}
+
+// ===== 收藏 (与 DB 同步) =====
+// 本地缓存作为离线兜底, 启动时拉服务端, 写操作先 UI 再异步同步
+const FavStore = {
+  KEY: 'mars_favs',
+  pending: new Set(),       // 待同步的 card_id (操作中, 防止竞态)
+  pendingAdd: new Set(),    // 失败的 POST, 等 30s 同步时重试
+  pendingDelete: new Set(), // 失败的 DELETE, 等 30s 同步时重试
+  async flushPending() {
+    // 重发失败队列; 顺序无所谓 — 后写的为准
+    for (const id of [...this.pendingAdd]) {
+      try {
+        const r = await fetch('/api/favorites?card_id=' + encodeURIComponent(id), { method: 'POST' });
+        if (r.ok) this.pendingAdd.delete(id);
+      } catch (e) { /* 下次再试 */ }
+    }
+    for (const id of [...this.pendingDelete]) {
+      try {
+        const r = await fetch('/api/favorites/' + encodeURIComponent(id), { method: 'DELETE' });
+        if (r.ok) this.pendingDelete.delete(id);
+      } catch (e) { /* 下次再试 */ }
+    }
+  },
+
+  read() {
+    try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); }
+    catch (e) { return []; }
+  },
+  write(arr) { localStorage.setItem(this.KEY, JSON.stringify(arr)); },
+
+  async syncFromServer() {
+    try {
+      const r = await fetch('/api/favorites', { cache: 'no-store' });
+      if (!r.ok) throw new Error('http ' + r.status);
+      const ids = await r.json();
+      this.write(ids);
+      this.applyToCards(ids);
+      // 拉成功 → 顺便把失败队列里残留的 add/delete 重发
+      if (this.pendingAdd.size || this.pendingDelete.size) this.flushPending();
+    } catch (e) {
+      console.warn('[fav] sync from server failed, using localStorage:', e.message);
+      this.applyToCards(this.read());
+    }
+  },
+
+  applyToCards(ids) {
+    const set = new Set(ids);
+    // grid 卡片
+    document.querySelectorAll('.card .fav').forEach(btn => {
+      const id = btn.closest('.card')?.getAttribute('href')?.replace('/cards/', '');
+      if (id) setFavVisual(btn, set.has(id));
+    });
+    // detail modal
+    const df = document.querySelector('#card-detail-modal .fav-detail');
+    if (df) {
+      const id = df.dataset.cardid;
+      if (id) setFavVisual(df, set.has(id));
+    }
+  },
+
+  async add(cardId) {
+    const favs = this.read();
+    if (!favs.includes(cardId)) { favs.push(cardId); this.write(favs); }
+    if (this.pending.has(cardId)) return;
+    this.pending.add(cardId);
+    try {
+      const r = await fetch('/api/favorites?card_id=' + encodeURIComponent(cardId), { method: 'POST' });
+      if (!r.ok) throw new Error('http ' + r.status);
+      this.pendingDelete.delete(cardId);  // 成功 → 取消任何 pending delete
+    } catch (e) {
+      // 真重试: 加到 pendingAdd, 30s 同步时会再试
+      this.pendingAdd.add(cardId);
+      console.warn('[fav] add failed, queued for retry:', cardId, e.message);
+    } finally {
+      this.pending.delete(cardId);
+    }
+  },
+
+  async remove(cardId) {
+    const favs = this.read();
+    const idx = favs.indexOf(cardId);
+    if (idx > -1) { favs.splice(idx, 1); this.write(favs); }
+    if (this.pending.has(cardId)) return;
+    this.pending.add(cardId);
+    try {
+      const r = await fetch('/api/favorites/' + encodeURIComponent(cardId), { method: 'DELETE' });
+      if (!r.ok) throw new Error('http ' + r.status);
+      this.pendingAdd.delete(cardId);  // 成功 → 取消任何 pending add
+    } catch (e) {
+      // 真重试: 加到 pendingDelete, 30s 同步时会再试
+      this.pendingDelete.add(cardId);
+      console.warn('[fav] remove failed, queued for retry:', cardId, e.message);
+    } finally {
+      this.pending.delete(cardId);
+    }
+  }
+};
+
+function setFavVisual(btn, active) {
+  btn.classList.toggle('active', active);
+  const path = btn.querySelector('.fav-icon path') || btn.querySelector('path');
+  if (path) path.setAttribute('fill', active ? 'currentColor' : 'none');
+}
+
+function toggleFav(btn) {
+  const cardId = btn.closest('.card')?.getAttribute('href')?.replace('/cards/', '');
+  if (!cardId) return;
+  const willActive = !btn.classList.contains('active');
+  setFavVisual(btn, willActive);
+  // 异步同步到 DB
+  if (willActive) FavStore.add(cardId); else FavStore.remove(cardId);
+  // 同步详情 modal 爱心 UI
+  const detailFav = document.querySelector(`#card-detail-modal .fav-detail[data-cardid="${cardId}"]`);
+  if (detailFav) setFavVisual(detailFav, willActive);
+}
+
+// 页面加载时拉服务端收藏; 后续每 30s 同步一次 (跨设备); 标签回到前台时立即同步
+document.addEventListener('DOMContentLoaded', function() {
+  FavStore.syncFromServer();
+  setInterval(() => FavStore.syncFromServer(), 30000);
+});
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) FavStore.syncFromServer();
+});
+window.addEventListener('focus', function() {
+  FavStore.syncFromServer();
+});
+
+// ==== HTMX 局部刷新: grid 恢复 fav, modal 显示 + 恢复状态 =====
+document.addEventListener('htmx:afterSwap', function(e) {
+  if (e.detail.target.id === 'card-grid') {
+    FavStore.applyToCards(FavStore.read());
+  }
+  if (e.detail.target.id === 'card-detail-modal') {
+    e.detail.target.classList.add('show');
+    const favs = FavStore.read();
+    const detailFav = document.querySelector('#card-detail-modal .fav-detail');
+    if (detailFav) {
+      const cardId = detailFav.dataset.cardid;
+      if (favs.includes(cardId)) setFavVisual(detailFav, true);
+    }
+    // 恢复评分和备注
+    const df = document.querySelector('.fav-detail');
+    if (df) {
+      const cardId = df.dataset.cardid;
+      const ratings = JSON.parse(localStorage.getItem('mars_ratings') || '{}');
+      const sel = document.getElementById('rating-select-' + cardId);
+      if (sel && ratings[cardId]) sel.value = ratings[cardId];
+      const notes = JSON.parse(localStorage.getItem('mars_notes') || '{}');
+      const ta = document.getElementById('notes-textarea-' + cardId);
+      if (ta && notes[cardId]) ta.value = notes[cardId];
+    }
+  }
+});
+
+// ===== Modal 控制 =====
+function closeModal() {
+  const modal = document.getElementById('card-detail-modal');
+  modal.classList.remove('show');
+  modal.innerHTML = '';
+  history.pushState({}, '', '/app');
+}
+
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('card-detail-modal');
+  if (e.target === modal) closeModal();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ===== 刷新卡片 =====
+function refresh() {
+  const u = new URLSearchParams();
+  if (State.set_id && State.set_id !== 'all') u.set('set_id', State.set_id);
+  if (State.supertype && State.supertype !== '全部') u.set('supertype', State.supertype);
+  if (State.type) u.set('type', State.type);
+  if (State.rarity) u.set('rarity', State.rarity);
+  if (State.sort && State.sort !== 'number') u.set('sort', State.sort);
+  if (State.q) u.set('q', State.q);
+  if (State.price_min) u.set('price_min', State.price_min);
+  if (State.price_max) u.set('price_max', State.price_max);
+  // 收藏筛选: 从 localStorage 读取 fav_ids
+  if (State.fav) {
+    const favs = JSON.parse(localStorage.getItem('mars_favs') || '[]');
+    if (favs.length > 0) u.set('fav_ids', favs.join(','));
+    else { u.set('fav_ids', 'none'); }
+  }
+  htmx.ajax("GET", "/cards?" + u.toString(), { target: "#card-grid", swap: "innerHTML" });
+}
+</script>
+
+</body>
+</html>
+{{end}}

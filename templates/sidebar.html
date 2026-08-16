@@ -1,0 +1,22 @@
+{{define "sidebar.html"}}
+{{range .}}
+<div class="sidebar-section">
+  <h3><span class="lang-zh">{{.SeriesCN}}</span><span class="lang-en">{{.Series}}</span></h3>
+  <ul class="set-list">
+    {{range .Sets}}
+    <li class="set-item"
+        hx-get="/cards?set_id={{.SetID}}"
+        hx-target="#card-grid"
+        hx-trigger="click"
+        hx-push-url="true"
+        onclick="event.preventDefault(); activateSet(this,'{{.SetID}}')">
+      {{if .Symbol}}<img src="{{.Symbol}}" alt="" class="set-symbol">{{end}}
+      <span class="set-name"><span class="lang-zh">{{.SetNameCN}}</span><span class="lang-en">{{.SetName}}</span></span>
+      {{if .Year}}<span class="set-year">{{.Year}}</span>{{end}}
+      <span class="set-count">{{.CardCnt}}</span>
+    </li>
+    {{end}}
+  </ul>
+</div>
+{{end}}
+{{end}}

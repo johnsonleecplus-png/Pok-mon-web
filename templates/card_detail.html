@@ -1,0 +1,10 @@
+{{define "card_detail.html"}}
+<div class="modal-content modal-zoom">
+  <button class="modal-close" onclick="closeModal()" aria-label="关闭">×</button>
+  <div class="modal-art">
+    <img src="{{if isLocal .Card.ImageSm}}{{.Card.ImageSm}}{{staticVer .Card.ImageSm}}{{else}}{{.Card.ImageLg}}{{end}}" alt="{{.Card.Name}}" class="card-zoom-img"
+         onclick="this.classList.toggle('zoomed')" style="cursor:zoom-in">
+  </div>
+  {{template "card_detail_body.html" .}}
+</div>
+{{end}}
